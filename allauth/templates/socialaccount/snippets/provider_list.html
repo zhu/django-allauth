@@ -13,8 +13,18 @@
 </li>
 {% endfor %}
 {% endif %}
+{% if provider.get_apps %}
+{% for app in provider.get_apps %}
+<li>
+  <a title="{{app.name}}" class="socialaccount_provider {{provider.id}} {{app.client_id}}" 
+     href="{% provider_login_url provider.id process=process scope=scope auth_params=auth_params app_id=app.client_id %}">{{app.name}}</a>
+</li>
+{% endfor %}
+{% else %}
 <li>
   <a title="{{provider.name}}" class="socialaccount_provider {{provider.id}}" 
      href="{% provider_login_url provider.id process=process scope=scope auth_params=auth_params %}">{{provider.name}}</a>
 </li>
+{% endif %}
 {% endfor %}
+
