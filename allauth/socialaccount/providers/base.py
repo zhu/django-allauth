@@ -60,6 +60,11 @@ class Provider(object):
     def get_settings(self):
         return app_settings.PROVIDERS.get(self.id, {})
 
+    @classmethod
+    def get_social_login(cls):
+        from allauth.socialaccount.models import SocialLogin
+        return SocialLogin
+
     def sociallogin_from_response(self, request, response):
         """
         Instantiates and populates a `SocialLogin` model based on the data
@@ -77,7 +82,8 @@ class Provider(object):
         :return: A populated instance of the `SocialLogin` model (unsaved).
         """
         # NOTE: Avoid loading models at top due to registry boot...
-        from allauth.socialaccount.models import SocialAccount, SocialLogin
+        from allauth.socialaccount.models import SocialAccount
+        SocialLogin = self.get_social_login()
 
         adapter = get_adapter(request)
         uid = self.extract_uid(response)

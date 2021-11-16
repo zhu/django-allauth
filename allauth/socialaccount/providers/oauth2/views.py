@@ -14,7 +14,7 @@ from allauth.socialaccount.helpers import (
     complete_social_login,
     render_authentication_error,
 )
-from allauth.socialaccount.models import SocialLogin, SocialToken
+from allauth.socialaccount.models import SocialToken
 from allauth.socialaccount.providers.base import ProviderException
 from allauth.socialaccount.providers.oauth2.client import (
     OAuth2Client,
@@ -98,6 +98,9 @@ class OAuth2View(object):
         )
         return client
 
+    def get_social_login(self):
+        return self.adapter.get_provider().get_social_login()
+
 
 class OAuth2LoginView(OAuth2View):
     def dispatch(self, request, *args, **kwargs):
@@ -107,7 +110,7 @@ class OAuth2LoginView(OAuth2View):
         action = request.GET.get("action", AuthAction.AUTHENTICATE)
         auth_url = self.adapter.authorize_url
         auth_params = provider.get_auth_params(request, action)
-        client.state = SocialLogin.stash_state(request)
+        client.state = self.get_social_login().stash_state(request)
         try:
             return HttpResponseRedirect(client.get_redirect_url(auth_url, auth_params))
         except OAuth2Error as e:
@@ -126,10 +129,17 @@ class OAuth2CallbackView(OAuth2View):
             return render_authentication_error(
                 request, self.adapter.provider_id, error=error
             )
-        app = self.adapter.get_provider().get_app(self.request)
-        client = self.get_client(self.request, app)
-
         try:
+            if self.adapter.supports_state:
+                request.state = self.get_social_login().verify_and_unstash_state(
+                    request, get_request_param(request, "state")
+                )
+            else:
+                request.state = self.get_social_login().unstash_state(request)
+
+            app = self.adapter.get_provider().get_app(self.request)
+            client = self.get_client(self.request, app)
+
             access_token = self.adapter.get_access_token_data(request, app, client)
             token = self.adapter.parse_token(access_token)
             token.app = app
@@ -137,13 +147,7 @@ class OAuth2CallbackView(OAuth2View):
                 request, app, token, response=access_token
             )
             login.token = token
-            if self.adapter.supports_state:
-                login.state = SocialLogin.verify_and_unstash_state(
-                    request, get_request_param(request, "state")
-                )
-            else:
-                login.state = SocialLogin.unstash_state(request)
-
+            login.state = request.state
             return complete_social_login(request, login)
         except (
             PermissionDenied,
