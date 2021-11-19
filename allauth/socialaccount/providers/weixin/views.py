@@ -16,12 +16,23 @@ class WeixinOAuth2Adapter(OAuth2Adapter):
     profile_url = "https://api.weixin.qq.com/sns/userinfo"
     client_class = WeixinOAuth2Client
 
+    AUTHORIZE_URL = {
+            'mp': 'https://open.weixin.qq.com/connect/oauth2/authorize',
+            'op': "https://open.weixin.qq.com/connect/qrconnect",
+            }
+
     @property
     def authorize_url(self):
+        app_type_and_scope = self.get_provider().get_app_type_and_scope()
         settings = self.get_provider().get_settings()
-        url = settings.get(
-            "AUTHORIZE_URL", "https://open.weixin.qq.com/connect/qrconnect"
-        )
+        url = settings.get("AUTHORIZE_URL", None)
+
+        if not url and app_type_and_scope:
+            url = self.AUTHORIZE_URL.get(app_type_and_scope[0], None)
+
+        if not url:
+            url = "https://open.weixin.qq.com/connect/qrconnect"
+
         return url
 
     def complete_login(self, request, app, token, **kwargs):
