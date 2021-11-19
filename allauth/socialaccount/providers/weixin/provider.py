@@ -27,7 +27,7 @@ class WeixinProvider(OAuth2Provider):
         return data["openid"]
 
     def get_default_scope(self):
-        return ["snsapi_login"]
+        return []
 
     def extract_common_fields(self, data):
         return dict(username=data.get("nickname"), name=data.get("nickname"))
@@ -52,7 +52,12 @@ class WeixinProvider(OAuth2Provider):
         else:
             return apps[0]
 
+    _apps = None
+
     def get_apps(self):
+        if self._apps:
+            return self._apps
+
         # NOTE: Avoid loading models at top due to registry boot...
         from allauth.socialaccount.models import SocialApp
 
@@ -74,6 +79,7 @@ class WeixinProvider(OAuth2Provider):
             apps = SocialApp.objects.filter(
                     provider=self.id, sites__id=site.id
                     )
+        self._apps = apps
         return apps
 
     @classmethod
@@ -124,6 +130,23 @@ class WeixinProvider(OAuth2Provider):
                 return state
 
         return WeixinSocialLogin
+
+    def get_app_type_and_scope(self):
+        return self.get_app(self.request).key.split(':', 1)
+
+    def get_scope(self, request):
+        scope = super().get_scope(request)
+        app_type = self.get_app_type_and_scope()
+        if not scope and app_type:
+            if len(app_type) > 1:
+                return app_type[1].split(',')
+            app_type = app_type[0]
+            if app_type == 'mp':
+                return ['snsapi_base']
+            else:
+                return ["snsapi_login"]
+        else:
+            return scope
 
 
 provider_classes = [WeixinProvider]
