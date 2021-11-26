@@ -54,15 +54,25 @@ class AppleOAuth2Client(OAuth2Client):
         )
         return client_secret
 
+    _client_id = None
+
     def get_client_id(self):
         """We support multiple client_ids, but use the first one for api calls"""
-        return self.consumer_key.split(",")[0]
+        return self._client_id or self.consumer_key.split(",")[0]
+
+    def set_client_id(self, client_id):
+        if client_id in self.consumer_key.split(","):
+            self._client_id = client_id
+        else:
+            raise ValueError("Invalid client_id")
+
+    client_id = property(get_client_id, set_client_id)
 
     def get_access_token(self, code):
         url = self.access_token_url
         client_secret = self.generate_client_secret()
         data = {
-            "client_id": self.get_client_id(),
+            "client_id": self.client_id,
             "code": code,
             "grant_type": "authorization_code",
             "redirect_uri": self.callback_url,

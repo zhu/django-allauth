@@ -197,8 +197,8 @@ class AppleTests(OAuth2TestsMixin, TestCase):
             with_refresh_token=with_refresh_token
         )
         with mocked_response(
-            MockedResponse(200, response_json, {"content-type": "application/json"}),
             resp_mock,
+            MockedResponse(200, response_json, {"content-type": "application/json"}),
         ):
             resp = self.client.post(
                 complete_url,
