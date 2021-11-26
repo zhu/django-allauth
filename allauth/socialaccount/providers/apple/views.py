@@ -89,7 +89,7 @@ class AppleOAuth2Adapter(OAuth2Adapter):
 
         # `user_data` is a big flat dictionary with the parsed JWT claims
         # access_tokens, and user info from the apple post.
-        identity_data = self.get_verified_identity_data(data["id_token"])
+        identity_data = data["id_token"]
         token.user_data = {**data, **identity_data}
 
         return token
@@ -121,6 +121,11 @@ class AppleOAuth2Adapter(OAuth2Adapter):
         """We need to gather the info from the apple specific login"""
         add_apple_session(request)
 
+        id_token = request.apple_login_session.get("id_token")
+        if id_token:
+            id_token = self.get_verified_identity_data(id_token)
+            client.client_id = id_token['aud']
+
         # Exchange `code`
         code = get_request_param(request, "code")
         access_token_data = client.get_access_token(code)
@@ -128,7 +133,7 @@ class AppleOAuth2Adapter(OAuth2Adapter):
         return {
             **access_token_data,
             **self.get_user_scope_data(request),
-            "id_token": request.apple_login_session.get("id_token"),
+            "id_token": id_token,
         }
 
 
