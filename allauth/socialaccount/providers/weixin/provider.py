@@ -22,6 +22,7 @@ class WeixinProvider(OAuth2Provider):
     id = "weixin"
     name = "Weixin"
     account_class = WeixinAccount
+    _app_id = None
 
     def extract_uid(self, data):
         return data["openid"]
@@ -32,6 +33,9 @@ class WeixinProvider(OAuth2Provider):
     def extract_common_fields(self, data):
         return dict(username=data.get("nickname"), name=data.get("nickname"))
 
+    def prefer_app_id(self, app_id):
+        self._app_id = app_id
+
     def get_app(self, request):
         # NOTE: Avoid loading models at top due to registry boot...
         from allauth.socialaccount.models import SocialApp
@@ -39,7 +43,7 @@ class WeixinProvider(OAuth2Provider):
         apps = self.get_apps()
 
         state = getattr(request, 'state', {})
-        app_id = state.get('app_id') or request.GET.get('app_id')
+        app_id = state.get('app_id') or self._app_id or request.GET.get('app_id')
 
         if app_id:
             for app in apps:
