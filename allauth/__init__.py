@@ -8,7 +8,7 @@ r"""
 
 """
 
-VERSION = (0, 46, 0, "feat", 2)
+VERSION = (0, 46, 0, "final", 0)
 
 __title__ = "django-allauth"
 __version_info__ = VERSION
@@ -18,3 +18,8 @@ __version__ = ".".join(map(str, VERSION[:3])) + (
 __author__ = "Raymond Penners"
 __license__ = "MIT"
 __copyright__ = "Copyright 2010-2021 Raymond Penners and contributors"
+
+LOCAL_VERSION = ("feat", 2)
+
+if LOCAL_VERSION[0]:
+    __version__ += "+" + ".".join(map(str, LOCAL_VERSION))
