@@ -19,7 +19,7 @@ __author__ = "Raymond Penners"
 __license__ = "MIT"
 __copyright__ = "Copyright 2010-2021 Raymond Penners and contributors"
 
-LOCAL_VERSION = ("feat", 2)
+LOCAL_VERSION = ("feat", 3)
 
 if LOCAL_VERSION[0]:
     __version__ += "+" + ".".join(map(str, LOCAL_VERSION))
