@@ -108,7 +108,7 @@ class WeixinProvider(OAuth2Provider):
                 try:
                     a = SocialAccount.objects.alias(
                             extra_json=Cast('extra_data', JSONField())
-                            ).get(
+                            ).distinct('user').get(  # one user has one unionid but multi account
                         provider=self.account.provider,
                         extra_json__unionid=unionid
                     )
