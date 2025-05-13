@@ -11,7 +11,7 @@ class MockedResponse:
         self.status_code = status_code
         if isinstance(content, dict):
             content = json.dumps(content)
-            headers["content-type"] = "application/json"
+            headers.setdefault("content-type", "application/json")
         self.content = content.encode("utf8")
         self.headers = headers
 
