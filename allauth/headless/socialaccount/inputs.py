@@ -91,19 +91,9 @@ class ProviderTokenInput(inputs.Input):
                             "token", adapter.validation_error("client_id_mismatch")
                         )
                     else:
-                        id_token = token.get("id_token")
-                        access_token = token.get("access_token")
-                        if (
-                            (id_token is not None and not isinstance(id_token, str))
-                            or (
-                                access_token is not None
-                                and not isinstance(access_token, str)
-                            )
-                            or (not id_token and not access_token)
-                        ):
-                            self.add_error(
-                                "token", adapter.validation_error("token_required")
-                            )
+                        # apps may not use `id_token` or `access_token`
+                        # provider.verify_token should handle the validation
+                        pass
         if not self.errors:
             cleaned_data["provider"] = provider
             try:
