@@ -300,7 +300,9 @@ class OAuth2TestsMixin:
             t = sa.socialtoken_set.get()
             # verify access_token and refresh_token
             self.assertEqual(self.get_access_token(), t.token)
-            resp = json.loads(self.get_login_response_json(with_refresh_token=True))
+            resp = self.get_login_response_json(with_refresh_token=True)
+            if not isinstance(resp, dict):
+                resp = json.loads(resp)
             if "refresh_token" in resp:
                 refresh_token = resp.get("refresh_token")
             elif "refreshToken" in resp:
