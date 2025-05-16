@@ -21,9 +21,6 @@ class WeixinAccount(ProviderAccount):
     def get_avatar_url(self):
         return self.account.extra_data.get("headimgurl")
 
-    def to_str(self):
-        return self.account.extra_data.get("nickname", super().to_str())
-
     def get_unionid(self):
         return self.account.extra_data.get("unionid", None)
 
