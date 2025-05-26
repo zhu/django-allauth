@@ -97,8 +97,8 @@ class WeixinOpenPlatformAdapter(WeixinOAuth2Adapter):
 
 class WeixinOfficialAccountAdapter(WeixinOAuth2Adapter):
     """adapter for Weixin Official Account Platform"""
-
     default_authorize_url = "https://open.weixin.qq.com/connect/oauth2/authorize"
+    profile_url = "https://api.weixin.qq.com/cgi-bin/user/info"
 
 
 class WeixinMiniProgramAdapter:
