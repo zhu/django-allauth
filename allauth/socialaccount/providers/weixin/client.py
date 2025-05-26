@@ -21,7 +21,7 @@ class WeixinOAuth2Client(OAuth2Client):
         sorted_params = OrderedDict()
         for param in sorted(params):
             sorted_params[param] = params[param]
-        return "%s?%s" % (authorization_url, urlencode(sorted_params))
+        return "%s?%s#wechat_redirect" % (authorization_url, urlencode(sorted_params))
 
     def get_access_token(self, code, pkce_code_verifier=None):
         data = {
