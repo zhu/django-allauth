@@ -53,6 +53,7 @@ class WeixinLogin(SocialLogin):
 
 class WeixinProvider(Provider):
     id = "weixin"
+    name = "Weixin"
     uses_apps = True
     account_class = WeixinAccount
     adapter_class: type
