@@ -6,6 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
 
 from allauth.account.utils import user_username
@@ -122,7 +123,7 @@ class WeixinOfficialAccountTests(WeixinTestsMixin, WeixinOAuth2TestsMixin, TestC
         return resp
 
     def get_expected_to_str(self):
-        return WeixinOfficialAccountOAuth2Provider.name
+        return self.app.name
 
 
 class mocked_provider:
@@ -203,6 +204,25 @@ class WeixinOfficialAccountUserInfoScopeTests(
                 resp, "/accounts/profile/", fetch_redirect_response=False
             )
             assert resp.context["user"] == user
+
+    @override_settings(
+        SOCIALACCOUNT_PROVIDERS={
+            "weixin": {
+                "APP": {
+                    "provider_id": "official-account:another"
+                }
+            }
+        }
+    )
+    def test_multiple_apps_with_same_subprovider(self):
+        user = get_user_model()(is_active=True)
+        user_username(user, "user")
+        user.set_password("test")
+        user.save()
+        self.client.login(username=user.username, password="test")
+        self.login(self.get_mocked_response(), process="connect")
+        account = SocialAccount.objects.get(user=user, provider=self.provider_id)
+        account.get_provider_account()
 
 
 class WeixinMiniProgramTests(WeixinTestsMixin, TestCase):
