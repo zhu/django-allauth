@@ -46,6 +46,11 @@ standalone Weixin provider:
                     'client_id': 'weixin-appid',
                     'secret': 'your-secret',
                 },
+                {
+                    'provider_id': 'mini-program:yet-another',
+                    'client_id': 'another-weixin-appid',
+                    'secret': 'your-secret-for-another-app',
+                },
             ],
             # 'SCOPE': [],  #  override all default scope
             # 'AUTHORIZE_URL': ''  # override all default authorize url
@@ -55,6 +60,8 @@ standalone Weixin provider:
 Weixin supports two kinds of oauth2 authorization, one for open platform and
 one for media platform, use provider_id ``open-platform`` for open platform,
 use provider_id ``official-account`` for media platform.
+If you have more than one app for the same subprovider, use
+``{{provider_id}}:{{unique_app_ident}}`` as provider_id.
 
 You can optionally specify additional scope to use. If no ``scope`` value is
 set, will use ``snsapi_login`` by default(for Open Platform Account, need
@@ -84,3 +91,5 @@ Legacy:
     weixin app.
     ``provider_id`` other than ``open-platform``, ``official-account``,
     ``mini-program`` will fallback to ``open-platform``.
+    You should migrate old app.provider_id and account.provider to new provider_id
+    before add another app.

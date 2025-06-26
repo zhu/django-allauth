@@ -37,14 +37,14 @@ class WeixinLogin(SocialLogin):
         if unionid is None:
             return
 
-        a = (
-            SocialAccount.objects.only("user")
+        a = next((
+            a for a in
+            SocialAccount.objects.only("user", "provider")
             .filter(
-                provider__in=WeixinProvider.subproviders.keys(),
                 extra_data__unionid=unionid,
             )
-            .first()
-        )
+            if isinstance(a.get_provider(), WeixinProvider)
+        ), None)
         if not a:
             return
 
@@ -61,15 +61,24 @@ class WeixinProvider(Provider):
     subproviders = {}
     legacy_url = False
 
+    abstract = False
+
     def __init_subclass__(cls, **kwargs):
         assert issubclass(cls, Provider)
+        if kwargs.get('abstract', False):
+            return
         assert cls.provider_id not in cls.subproviders
         cls.subproviders[cls.provider_id] = cls
 
     def __new__(cls, request, app=None):
         assert app is not None
-        cls = cls.subproviders.get(app.provider_id, WeixinOpenPlatformProvider)
+        provider_id = app.provider_id.split(":", 1)[0]
+        cls = cls.subproviders.get(provider_id, WeixinOpenPlatformProvider)
         return super().__new__(cls)
+
+    def __init__(self, request, app=None):
+        super().__init__(request, app)
+        self.name = app.name
 
     def get_adapter(self):
         return self.adapter_class(self.request, self.app, self)
@@ -84,6 +93,8 @@ class WeixinProvider(Provider):
         login = super().sociallogin_from_response(request, response)
         return WeixinLogin.deserialize(login.serialize())
 
+
+class WeixinOAuth2Provider(WeixinProvider, OAuth2Provider, abstract=True):
     def url_path_kwargs(self):
         if self.legacy_url:
             return {}
@@ -106,7 +117,7 @@ class WeixinProvider(Provider):
         return self.get_adapter()
 
 
-class WeixinOpenPlatformProvider(WeixinProvider, OAuth2Provider):
+class WeixinOpenPlatformProvider(WeixinOAuth2Provider):
     provider_id = "open-platform"
     name = "Weixin Open Platform"
     adapter_class = WeixinOpenPlatformAdapter
@@ -133,7 +144,7 @@ class WeixinOpenPlatformProvider(WeixinProvider, OAuth2Provider):
         return login
 
 
-class WeixinOfficialAccountOAuth2Provider(WeixinProvider, OAuth2Provider):
+class WeixinOfficialAccountOAuth2Provider(WeixinOAuth2Provider):
     provider_id = "official-account"
     name = "Weixin Official Account Platform"
     adapter_class = WeixinOfficialAccountAdapter
