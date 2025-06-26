@@ -150,6 +150,10 @@ class WeixinMiniProgramProvider(WeixinProvider, Provider):
     adapter_class = WeixinMiniProgramAdapter
     supports_token_authentication = True
 
+    def get_login_url(self, request, next=None, **kwargs):
+        # mini program only supports verify token
+        return "javascript:void(0)"
+
     def verify_token(self, request, token):
         js_code = token.get("js_code")
         if not js_code:
