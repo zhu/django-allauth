@@ -13,8 +13,8 @@ from allauth.account.utils import user_username
 from allauth.core import context
 from allauth.socialaccount.helpers import complete_social_login
 from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.tests import OAuth2TestsMixin, setup_app
-from allauth.tests import MockedResponse, mocked_response
+from tests.apps.socialaccount.base import OAuth2TestsMixin, setup_app
+from tests.mocking import MockedResponse, mocked_response
 
 from allauth.socialaccount.providers.weixin.provider import (
     WeixinOfficialAccountOAuth2Provider,
