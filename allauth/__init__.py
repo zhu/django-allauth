@@ -9,11 +9,14 @@ r"""
 """
 
 VERSION = (65, 17, 0, "final", 0)
+LOCAL_VERSION = "feat_auth.1"
 
 __title__ = "django-allauth"
 __version_info__ = VERSION
-__version__ = ".".join(map(str, VERSION[:3])) + (
-    f"-{VERSION[3]}{VERSION[4] or ''}" if VERSION[3] != "final" else ""
+__version__ = (
+    ".".join(map(str, VERSION[:3]))
+    + (f"-{VERSION[3]}{VERSION[4] or ''}" if VERSION[3] != "final" else "")
+    + f"+{LOCAL_VERSION}"
 )
 __author__ = "Raymond Penners"
 __license__ = "MIT"
