@@ -55,6 +55,7 @@ INSTALLED_SOCIALACCOUNT_APPS: tuple[str, ...] = (
     "allauth.socialaccount.providers.globus",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.gumroad",
+    "allauth.socialaccount.providers.huawei",
     "allauth.socialaccount.providers.hubic",
     "allauth.socialaccount.providers.hubspot",
     "allauth.socialaccount.providers.instagram",
