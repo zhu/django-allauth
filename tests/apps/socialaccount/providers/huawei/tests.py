@@ -1,8 +1,11 @@
 import json
+import requests
 import time
 from http import HTTPStatus
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -91,3 +94,64 @@ class HuaweiTests(OAuth2TestsMixin, TestCase):
 
     def test_extract_uid_falls_back_to_union_id(self):
         assert self.provider.extract_uid({"unionId": "union-id"}) == "union-id"
+
+    def test_verify_token_with_quick_login_code(self):
+        with self.mocked_response(
+            MockedResponse(
+                HTTPStatus.OK,
+                {
+                    "openId": "huawei-open-id",
+                    "unionId": "huawei-union-id",
+                    "phoneNumber": "008613800138000",
+                    "phoneNumberValid": 1,
+                    "purePhoneNumber": "13800138000",
+                    "phoneCountryCode": "0086",
+                },
+            )
+        ):
+            sociallogin = self.provider.verify_token(
+                self.request, {"code": "quick-login-code"}
+            )
+            assert requests.Session.post.call_args.kwargs["url"] == (
+                "https://account-api.cloud.huawei.com/oauth2/v6/quickLogin/getPhoneNumber"
+            )
+            assert requests.Session.post.call_args.kwargs["json"] == {
+                "code": "quick-login-code",
+                "clientId": self.app.client_id,
+                "clientSecret": self.app.secret,
+            }
+
+        assert sociallogin.account.uid == "huawei-union-id"
+        assert sociallogin.account.extra_data == {
+            "openId": "huawei-open-id",
+            "unionId": "huawei-union-id",
+            "phoneNumber": "008613800138000",
+            "phoneNumberValid": 1,
+            "purePhoneNumber": "13800138000",
+            "phoneCountryCode": "0086",
+        }
+        assert sociallogin.phone == "+8613800138000"
+        assert sociallogin.phone_verified is True
+
+    def test_verify_token_with_quick_login_code_handles_huawei_errors(self):
+        with self.mocked_response(
+            MockedResponse(
+                HTTPStatus.OK,
+                {
+                    "resultCode": 60180008,
+                    "resultDesc": "user or phone number not exist",
+                },
+            )
+        ):
+            with self.assertRaises(ValidationError):
+                self.provider.verify_token(self.request, {"code": "quick-login-code"})
+
+    def test_verify_token_without_quick_login_code_uses_openid_connect(self):
+        with patch(
+            "allauth.socialaccount.providers.openid_connect.provider."
+            "OpenIDConnectProvider.verify_token"
+        ) as verify_token:
+            ret = self.provider.verify_token(self.request, {"id_token": "token"})
+
+        verify_token.assert_called_once_with(self.request, {"id_token": "token"})
+        assert ret is verify_token.return_value
