@@ -9,7 +9,7 @@ r"""
 """
 
 VERSION = (65, 17, 0, "final", 0)
-LOCAL_VERSION = "feat_auth.1"
+LOCAL_VERSION = "feat_auth.2"
 
 __title__ = "django-allauth"
 __version_info__ = VERSION
