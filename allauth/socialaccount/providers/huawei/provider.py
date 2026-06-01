@@ -27,7 +27,7 @@ class HuaweiProvider(OpenIDConnectProvider):
     name = "Huawei"
     account_class = HuaweiProviderAccount
     oauth2_adapter_class = HuaweiAdapter
-    default_server_url = "https://oauth-login.cloud.huawei.com/"
+    default_server_url = "https://oauth-login.cloud.huawei.com"
     phone_number_url = (
         "https://account-api.cloud.huawei.com/oauth2/v6/quickLogin/getPhoneNumber"
     )
