@@ -14,10 +14,8 @@ from allauth.account.utils import user_username
 from allauth.core import context
 from allauth.socialaccount.helpers import complete_social_login
 from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.providers.weixin.provider import (
-    WeixinOfficialAccountOAuth2Provider,
-    WeixinProvider,
-)
+from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+from allauth.socialaccount.providers.weixin.provider import WeixinProvider
 from tests.apps.socialaccount.base import OAuth2TestsMixin, setup_app
 from tests.mocking import MockedResponse, mocked_response
 
@@ -91,12 +89,31 @@ class WeixinOAuth2TestsMixin(OAuth2TestsMixin):
         return "某某某"
 
     def test_get_userinfo(self):
-        adapter = WeixinOfficialAccountOAuth2Provider.adapter_class(
-            self.request, self.app, self.provider
-        )
+        adapter = self.provider.get_adapter()
         with mocked_response(self.get_mocked_response()):
             resp = adapter.get_userinfo("somesk", "someopenid")
+            requests.Session.get.assert_called_once_with(
+                "https://api.weixin.qq.com/sns/userinfo",
+                params={"access_token": "somesk", "openid": "someopenid"},
+            )
         assert resp["nickname"] == "某某某"
+
+    def test_get_userinfo_rejects_business_error(self):
+        adapter = self.provider.get_adapter()
+        response = MockedUserInfoResponse(
+            HTTPStatus.OK,
+            json.dumps(
+                {
+                    "errcode": 40001,
+                    "errmsg": "invalid credential",
+                }
+            ),
+            headers={"content-type": "text/plain"},
+        )
+
+        with mocked_response(response):
+            with self.assertRaises(OAuth2Error):
+                adapter.get_userinfo("invalid-token", "someopenid")
 
 
 class WeixinOpenPlatformTests(WeixinTestsMixin, WeixinOAuth2TestsMixin, TestCase):
@@ -112,6 +129,30 @@ class WeixinOpenPlatformTests(WeixinTestsMixin, WeixinOAuth2TestsMixin, TestCase
         ):
             sociallogin = self.provider.verify_token(None, {"code": code})
             assert sociallogin.account.uid == "ofh-A6kbx2Q4wu-JBn-NFPZLH-PY"
+
+    def test_complete_login_rejects_profile_business_error(self):
+        adapter = self.provider.get_adapter()
+        login_response = self.get_login_response_json()
+        token = adapter.parse_token(login_response)
+        userinfo_response = MockedUserInfoResponse(
+            HTTPStatus.OK,
+            json.dumps(
+                {
+                    "errcode": 40001,
+                    "errmsg": "invalid credential",
+                }
+            ),
+            headers={"content-type": "text/plain"},
+        )
+
+        with mocked_response(userinfo_response):
+            with self.assertRaises(OAuth2Error):
+                adapter.complete_login(
+                    self.request,
+                    self.app,
+                    token,
+                    response=login_response,
+                )
 
 
 class WeixinOfficialAccountTests(WeixinTestsMixin, WeixinOAuth2TestsMixin, TestCase):
