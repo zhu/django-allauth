@@ -7,6 +7,7 @@ from django.http import Http404, HttpRequest
 
 from allauth.account.internal.decorators import login_not_required
 from allauth.socialaccount.adapter import get_adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 from allauth.socialaccount.providers.oauth2.views import (
     OAuth2Adapter,
     OAuth2CallbackView,
@@ -64,7 +65,10 @@ class WeixinOAuth2Adapter(OAuth2Adapter):
             # XXX: Weixin return response header 'content-type'='text/plain'.
             #      So `requests` guesses the encoding is "ISO-8859-1", which is wrong.
             resp.encoding = "utf-8"
-            return resp.json()
+            data = resp.json()
+        if data.get("errcode", 0) != 0:
+            raise OAuth2Error(f"Error retrieving user info: {resp.content}")
+        return data
 
     def complete_login(self, request: HttpRequest, app, token, **kwargs):
         response = kwargs["response"]
@@ -96,8 +100,8 @@ class WeixinOpenPlatformAdapter(WeixinOAuth2Adapter):
 
 class WeixinOfficialAccountAdapter(WeixinOAuth2Adapter):
     """adapter for Weixin Official Account Platform"""
+
     default_authorize_url = "https://open.weixin.qq.com/connect/oauth2/authorize"
-    profile_url = "https://api.weixin.qq.com/cgi-bin/user/info"
 
 
 class WeixinMiniProgramAdapter:
